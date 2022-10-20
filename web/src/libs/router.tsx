@@ -3,7 +3,7 @@ import { RouterObj, SuspenseLoadingProps } from '@/types/Common';
 import Loading from '@/components/common/Loading';
 
 const NotFound = lazy(() => import("@/pages/NotFound"));
-const Home = lazy(() => import('@/pages/Home'));
+const Home = lazy(() => import('@/pages/home/Home'));
 
 const SuspenseLoading = (props: SuspenseLoadingProps) => {
   const { children } = props;

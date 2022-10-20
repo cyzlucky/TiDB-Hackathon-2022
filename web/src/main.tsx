@@ -17,7 +17,7 @@ import DefaultSnackbar from "@/components/snackbar/default";
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ThemeProvider theme={theme}>
+      {/* <ThemeProvider theme={theme}> */}
         <SnackbarProvider
           maxSnack={10}
           action={(key: SnackbarKey) => (
@@ -39,7 +39,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         >
           <App />
         </SnackbarProvider>
-      </ThemeProvider>
+      {/* </ThemeProvider> */}
       <CssBaseline />
     </BrowserRouter>
   </React.StrictMode>
