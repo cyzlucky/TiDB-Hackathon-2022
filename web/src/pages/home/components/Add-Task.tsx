@@ -7,12 +7,22 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { Box, ButtonGroup, Checkbox, Divider, FormControlLabel, Grid, TextField } from '@mui/material';
 import BasicSelect from './Select';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import {
+  Box,
+  ButtonGroup,
+  Checkbox,
+  Divider,
+  FormControlLabel,
+  Grid,
+  TextField
+} from '@mui/material';
+import { SubmitErrorHandler, SubmitHandler, useForm } from 'react-hook-form';
+import { CreateTaskInputParams, CreateTaskParams, ErrorField } from '@/types/Common';
+import AddTaskName from './Add-Task-Name';
 
 const BootstrapDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
@@ -56,6 +66,27 @@ function BootstrapDialogTitle(props: DialogTitleProps) {
   );
 }
 
+const Form = (props: React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>) => {
+  const { children, ...otherProps} = props;
+  return (
+    <form
+      style={{
+        padding: "20px",
+        paddingLeft: "56px",
+        paddingRight: "56px",
+      }}
+      {...otherProps}
+    >
+      {children}
+    </form>
+  );
+}
+
+export interface InputParams {
+  name: string;
+  selectSql: string;
+}
+
 interface AddTaskDialogProps {
   open: boolean;
   handleClose: () => void;
@@ -63,7 +94,74 @@ interface AddTaskDialogProps {
 
 export default function AddTaskDialog(props: AddTaskDialogProps) {
   const { open, handleClose } = props;
-  const [count, setCount] = React.useState(1);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<InputParams>();
+  const submitRef = React.useRef<HTMLInputElement>(null);
+
+  const [data, setData] = React.useState<CreateTaskParams>({
+    name: "",
+    source: {
+      client: "",
+      datasource: "",
+      database: "",
+      table: [],
+      selectSql: "",
+      taskSplitMode: 1,
+    },
+    target: {
+      datasource: "",
+      database: "",
+      importDataMode: 1,
+    },
+    concurrent: 1,
+    isSyncSchema: false,
+  });
+
+  const [error, setError] = React.useState<ErrorField<CreateTaskInputParams>>({
+    name: false,
+    selectSql: false,
+  });
+
+  const handleClick = () => {
+    submitRef.current?.click();
+  }
+
+  React.useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      console.log(value);
+      if (name) {
+        setError({
+          ...error,
+          [name]: value[name] === "",
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, error]);
+
+  React.useEffect(() => {
+    setValue("name", "TASK" + +new Date());
+  }, []);
+
+  const onSubmit: SubmitHandler<InputParams> = (value, event) => {
+    console.log("submit", value);
+
+  }
+
+  const onError: SubmitErrorHandler<InputParams> = (err, event) => {
+    const errorKeys = Object.keys(err);
+    const newErrors = Object.assign({}, ...errorKeys.map(k => ({[k]: true})));
+    console.log("error", err);
+    setError({
+      ...error,
+      ...newErrors,
+    });
+  }
 
   return (
     <div>
@@ -76,69 +174,15 @@ export default function AddTaskDialog(props: AddTaskDialogProps) {
           创建任务
         </BootstrapDialogTitle>
         <DialogContent dividers>
-          <form
-            style={{
-              padding: "20px",
-              paddingLeft: "56px",
-              paddingRight: "56px",
-            }}
-          >
-            <Grid
-              sx={{
-                width: "100%",
-                marginBottom: "24px",
-                marginTop: "8px",
-                alignItems: "center",
-                display: "flex",
-                flexDirection: "column"
-              }}
-            >
-              <TextField
-                id="task-name"
-                label="任务名称"
-                variant="outlined"
-                sx={{ minWidth: "460px"}}
-              />
-              <Box sx={{height: "24px"}}/>
-              <Grid
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <FormControlLabel control={<Checkbox defaultChecked />} label="是否同步Schema" />
-                <Box sx={{width: 48}}/>
-                <Grid>
-                  读写并行度：
-                </Grid>
-                <ButtonGroup>
-                  <Button
-                    aria-label="reduce"
-                    onClick={() => {
-                      setCount(Math.max(count - 1, 0));
-                    }}
-                  >
-                    <RemoveIcon fontSize="small" />
-                  </Button>
-                  <OutlinedInput
-                    value={count}
-                    sx={{width: "56px", borderColor: "red", height: "40px"}}
-                    onChange={(event) => {
-                      setCount(parseInt(event.target.value, 10));
-                    }}
-                  />
-                  <Button
-                    aria-label="increase"
-                    onClick={() => {
-                      setCount(count + 1);
-                    }}
-                  >
-                    <AddIcon fontSize="small" />
-                  </Button>
-                </ButtonGroup>
-              </Grid>
-            </Grid>
-            {/* <Divider /> */}
+          <Form onSubmit={handleSubmit(onSubmit, onError)}>
+            <AddTaskName
+              data={data}
+              setData={setData}
+              error={error}
+              register={register}
+              errors={errors.name}
+            />
+
             <Grid
               sx={{
                 display: "flex",
@@ -210,10 +254,12 @@ export default function AddTaskDialog(props: AddTaskDialogProps) {
                 />
               </Grid>
             </Grid>
-          </form>
+            <input hidden type={"submit"} ref={submitRef}/>
+          </Form>
         </DialogContent>
+
         <DialogActions>
-          <Button autoFocus onClick={handleClose}>
+          <Button autoFocus onClick={handleClick}>
             提交
           </Button>
           <Box sx={{width: 48}}/>

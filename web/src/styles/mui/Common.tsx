@@ -8,7 +8,7 @@ export const textFieldContainer: SxProps<Theme> = {
 export const errorsMessage: SxProps<Theme> = {
   position: "absolute",
   right: "16px",
-  bottom: "-26px",
+  bottom: "-20px",
   fontSize: "12px",
   color: "#ff2a2a",
   userSelect: "none",
